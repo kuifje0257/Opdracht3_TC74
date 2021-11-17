@@ -1,0 +1,3 @@
+/home/pi/EMBED2/Labo/Opdracht3/build/CMakeFiles/rebuild_cache.dir
+/home/pi/EMBED2/Labo/Opdracht3/build/CMakeFiles/Opdracht3.dir
+/home/pi/EMBED2/Labo/Opdracht3/build/CMakeFiles/edit_cache.dir

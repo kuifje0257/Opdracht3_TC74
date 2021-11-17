@@ -1,0 +1,1 @@
+/usr/bin/cc   -rdynamic CMakeFiles/Opdracht3.dir/Publish.c.o  -o Opdracht3  -lpaho-mqtt3c 
