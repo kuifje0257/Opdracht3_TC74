@@ -1,6 +1,7 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
+#include "unistd.h"
 #include "math.h"
 #include "MQTTClient.h"
 
@@ -17,8 +18,8 @@ int sysCommand(){
 
    strcpy(command, "sudo i2cget -y 1 0x48 0 b" );
    system(command);
-
-    return (0);
+   
+   return (0);
 } 
 
 
@@ -30,6 +31,7 @@ int main(int argc, char* argv[])
     MQTTClient_message pubmsg = MQTTClient_message_initializer;
     MQTTClient_deliveryToken token;
     int rc;
+    char ph[50];
     
     MQTTClient_create(&client, ADDRESS, CLIENTID,
         MQTTCLIENT_PERSISTENCE_NONE, NULL);
@@ -41,6 +43,7 @@ int main(int argc, char* argv[])
         printf("Failed to connect, return code %d\n", rc);
         exit(-1);
     }
+    Sleep(2);
  
     int c = sysCommand();
 
@@ -59,18 +62,23 @@ int main(int argc, char* argv[])
     //sprintf(result,"hello");
     //pubmsg.payload = result;
 
-    pubmsg.payloadlen = 50;
-    pubmsg.qos = QOS;
-    pubmsg.retained = 0;
+    if(ph != result){
+        pubmsg.payloadlen = 50;
+        pubmsg.qos = QOS;
+        pubmsg.retained = 0;
 
-    MQTTClient_publishMessage(client, TOPIC, &pubmsg, &token);
-    printf("Waiting for up to %d seconds for publication of %s\n"
-            "on topic %s for client with ClientID: %s\n",
-            (int)(TIMEOUT/1000), result, TOPIC, CLIENTID);
-    rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
-    printf("Message with delivery token %d delivered\n", token);
-    MQTTClient_disconnect(client, 10000);
-    MQTTClient_destroy(&client);
-    return rc;
-    
+        MQTTClient_publishMessage(client, TOPIC, &pubmsg, &token);
+        printf("Waiting for up to %d seconds for publication of %s\n"
+                "on topic %s for client with ClientID: %s\n",
+                (int)(TIMEOUT/1000), result, TOPIC, CLIENTID);
+        rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
+        printf("Message with delivery token %d delivered\n", token);
+        
+        return rc;
+        sprintf(ph, result);
+
+    }
+    else{
+        print("no changes");
+    }
 }
