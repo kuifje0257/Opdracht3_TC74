@@ -2,7 +2,6 @@
 #include "stdlib.h"
 #include "string.h"
 #include "unistd.h"
-#include <math.h>
 #include <assert.h>
 #include "MQTTClient.h"
 
@@ -13,6 +12,7 @@
 #define QOS         1
 #define TIMEOUT     1000L
 
+//weghalen van "0x" in "0x??"
 size_t chopN(char *str, size_t n)
 {
     assert(n != 0 && str != 0);
@@ -32,7 +32,6 @@ int main(int argc, char* argv[])
     MQTTClient_message pubmsg = MQTTClient_message_initializer;
     MQTTClient_deliveryToken token;
     int rc;
-    char ph[50];
     
     MQTTClient_create(&client, ADDRESS, CLIENTID,
         MQTTCLIENT_PERSISTENCE_NONE, NULL);
@@ -63,67 +62,52 @@ int main(int argc, char* argv[])
 
     chopN(buf,2);
 
-    //
+    char leftHalf[100], rightHalf[100];
+    int length, mid, i, k;
+    char *ptr;
+    int hex1, hex2, decimal;
 
-    long long decimal, place;
-    int i = 0, val, len;
+    char result[5];
 
+    /* Find length of string using strlen function */
+    length = strlen(buf);
+  
+    mid = length/2;
+    /* Copy left half of inputString to leftHalf */
+    for(i = 0; i < mid; i++) {
+        leftHalf[i]= buf[i];
+    }
+    leftHalf[i] = '\0';
+  
+    /* Copy right half of inputString to rightHalf  */
+    for(i = mid, k = 0; i <= length; i++, k++) {
+        rightHalf[k]= buf[i];
+    }
+
+    //decimaal maken
+    hex1 = strtol(leftHalf, &ptr, 10)*16;
+    hex2 = strtol(rightHalf, &ptr, 10);
     
-    decimal = 0;
-    place = 1;
+    decimal = hex1+hex2;
+
+    sprintf(result,"%d",decimal);
+    printf("result : %s\n",result);
 
 
-    /* Find the length of total number of hex digit */
-    len = strlen(buf);
-    len--;
+    pubmsg.payload = result;
 
-    /*
-     * Iterate over each hex digit
-     */
-    for(i=0; buf[i]!='\0'; i++)
-    {
- 
-        /* Find the decimal representation of hex[i] */
-        if(buf[i]>='0' && buf[i]<='9')
-        {
-            val = buf[i] - 48;
-        }
-        else if(buf[i]>='a' && buf[i]<='f')
-        {
-            val = buf[i] - 97 + 10;
-        }
-        else if(buf[i]>='A' && buf[i]<='F')
-        {
-            val = buf[i] - 65 + 10;
-        }
+    pubmsg.payloadlen = 50;
+    pubmsg.qos = QOS;
+    pubmsg.retained = 0;
 
-        decimal += val * pow(16, len);
-        len--;
-    }
-
-    printf("Hexadecimal number = %s\n", buf);
-    printf("Decimal number = %lld\n", decimal);
-    //
-    pubmsg.payload = buf;
-
-    if(ph != buf){
-        pubmsg.payloadlen = 50;
-        pubmsg.qos = QOS;
-        pubmsg.retained = 0;
-
-        MQTTClient_publishMessage(client, TOPIC, &pubmsg, &token);
-        printf("Waiting for up to %d seconds for publication of %s\n"
-                "on topic %s for client with ClientID: %s\n",
-                (int)(TIMEOUT/1000), buf, TOPIC, CLIENTID);
-        rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
-        printf("Message with delivery token %d delivered\n", token);
-        
-        return rc;
-        sprintf(ph, buf);
-
-    }
-    else{
-        printf("no changes");
-    }
+    MQTTClient_publishMessage(client, TOPIC, &pubmsg, &token);
+    printf("Waiting for up to %d seconds for publication of %s\n"
+            "on topic %s for client with ClientID: %s\n",
+            (int)(TIMEOUT/1000), result, TOPIC, CLIENTID);
+    rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
+    printf("Message with delivery token %d delivered\n", token);
+      
+    return rc;
+    
     pclose(p);
 }
